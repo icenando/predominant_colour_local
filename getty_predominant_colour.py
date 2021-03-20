@@ -2,16 +2,19 @@
 # getty_predominant_colour.py - averages the colour of each thumbnail in https://www.gettyimages.co.uk/editorial-images
 # regularly, and uses it to compose a graphical representation of it.
 
-import requests, os
+import requests
+import os
 from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
 
+
 def div_mult_by_255(array, key):
-    if key=="div":
+    if key == "div":
         return array/255
-    elif key=='mult':
+    elif key == 'mult':
         return array*255
+
 
 def img_to_array():
     img = Image.open("getty_thumb/saved_thumb.jpg")
@@ -20,41 +23,54 @@ def img_to_array():
     img_array = div_mult_by_255(img_array, 'div')
     return img_array
 
+
 def compute_avg(array):
-    array = mean(array, axis=(0,1))
+    array = mean(array, axis=(0, 1))
     return array
+
 
 def main():
     getty_ed_url = "https://www.gettyimages.co.uk/editorial-images"
     target_class = "editorial-landing__img"
     dir_name = "getty_thumb"
     current_thumb = "saved_thumb.jpg"
-    os.makedirs(dir_name, exist_ok = True)   # One thumbnail at any one time in this directory for processing.
+    os.makedirs(dir_name, exist_ok=True)   # One thumbnail at any one time in this directory for processing.
 
     res = requests.get(getty_ed_url)
     res.raise_for_status()
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)  # find all thumbnails of target_class
+    #print(len(thumbs))
+    collated_avg = [[] * len(thumbs) for i in range(3)]
+    #print(len(collated_avg))
 
-    #for i in range(len(thumbs)):
-    thumb_source = thumbs[9]['src']  # find thumbnail links
-    res = requests.get(thumb_source)  # download thumbnail
-    res.raise_for_status()
-    # Save thumbnail
-    image_file = open(dir_name+"/"+current_thumb, 'wb')
-    for chunk in res.iter_content(100000):
-        image_file.write(chunk)
-    image_file.close()
-    # open each thumbnail as array
-    img_array = img_to_array()
+    for image in range(len(thumbs)):
+        thumb_source = thumbs[image]['src']  # find thumbnail links
+        res = requests.get(thumb_source)  # download thumbnail
+        res.raise_for_status()
+        # Save thumbnail
+        image_file = open(dir_name+"/"+current_thumb, 'wb')
+        for chunk in res.iter_content(100000):
+            image_file.write(chunk)
+        image_file.close()
 
-    # average each channel, store it in linked list
-    avg_per_channel=compute_avg(img_array)
+        # open thumbnail as array
+        img_array = img_to_array()
 
-    # compute array back to 256 colours
-    avg_per_channel=div_mult_by_255(avg_per_channel, 'mult')
-    print(avg_per_channel)
+        # average each channel, store it in list
+        avg_per_channel = compute_avg(img_array)
 
-if __name__=="__main__":
+        # compute array back to 256 colours
+        avg_per_channel = div_mult_by_255(avg_per_channel, 'mult')
+        #print(avg_per_channel)
+
+        # each average inside list
+        for channel, value in enumerate(avg_per_channel):
+            collated_avg[channel].append(value)
+
+    for i in collated_avg: print(i)
+
+
+if __name__ == "__main__":
     main()
