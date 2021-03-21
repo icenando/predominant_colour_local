@@ -11,14 +11,14 @@ from numpy import asarray, mean
 from datetime import datetime
 
 
-def img_to_array():
-    img = Image.open("getty_thumb/saved_thumb.jpg")
+def img_to_array(thumb_file_path):
+    img = Image.open(thumb_file_path)
     img_array = asarray(img)
     img_array = img_array.astype(float)
     return img_array
 
 
-def compute_avg(array):
+def channel_avg(array):
     array = mean(array, axis=(0, 1))
     return array
 
@@ -33,8 +33,8 @@ def get_date_time():
     return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
 
 
-def save_to_csv(collated_avg):
-    with open("avgs/averages.csv", "a") as output:
+def save_to_csv(filepath, collated_avg):
+    with open(filepath, "a") as output:
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
         wr.writerow(get_date_time())
@@ -44,12 +44,19 @@ def save_to_csv(collated_avg):
     pass
 
 
+def save_thumbnail(filepath, res):
+    image_file = open(filepath, 'wb')
+    for chunk in res.iter_content(100000):
+        image_file.write(chunk)
+    image_file.close()
+
+
 def main():
     getty_ed_url = "https://www.gettyimages.co.uk/editorial-images"
     target_class = "editorial-landing__img"
-    dir_name = "getty_thumb"
-    current_thumb = "saved_thumb.jpg"
-    os.makedirs(dir_name, exist_ok=True)   # One thumbnail at any one time in this directory for processing.
+    thumb_file = "getty_thumb/getty_thumb.jpg"
+    averages_file = "getty_averages/getty_averages.csv"
+    #os.makedirs(dir_name, exist_ok=True)   # One thumbnail at any one time in this directory for processing.
 
     res = requests.get(getty_ed_url)
     res.raise_for_status()
@@ -64,16 +71,13 @@ def main():
         res.raise_for_status()
 
         # Save thumbnail
-        image_file = open(dir_name+"/"+current_thumb, 'wb')
-        for chunk in res.iter_content(100000):
-            image_file.write(chunk)
-        image_file.close()
+        save_thumbnail(thumb_file, res)
 
         # open thumbnail as array
-        img_array = img_to_array()
+        img_array = img_to_array(thumb_file)
 
         # average each channel, store it in list
-        avg_per_channel = compute_avg(img_array)
+        avg_per_channel = channel_avg(img_array)
 
         # each average inside list
         for channel, value in enumerate(avg_per_channel):
@@ -83,7 +87,7 @@ def main():
     collated_avg = img_avg(collated_avg)
 
     # save to file
-    save_to_csv(collated_avg)
+    save_to_csv(averages_file, collated_avg)
 
     for i in collated_avg: print(i)
 
