@@ -4,10 +4,10 @@
 
 import requests
 import os
+import csv
 from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
-import csv
 from datetime import datetime
 
 
@@ -23,8 +23,14 @@ def compute_avg(array):
     return array
 
 
+def img_avg(array):
+    for image in range(len(array[0])):
+        array[3].append(int((array[0][image] + array[1][image] + array[2][image]) // 3))
+    return array
+
+
 def get_date_time():
-    return((datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S')))
+    return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
 
 
 def save_to_csv(collated_avg):
@@ -32,7 +38,7 @@ def save_to_csv(collated_avg):
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
         wr.writerow(get_date_time())
-        for channel, values in zip([['R'], ['G'], ['B']], collated_avg):
+        for channel, values in zip([['R'], ['G'], ['B'], ['AVG']], collated_avg):
             wr.writerow(channel + values)
         print("Saved!")
     pass
@@ -50,12 +56,13 @@ def main():
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)  # find all thumbnails of target_class
-    collated_avg = [[] * len(thumbs) for _ in range(3)]  # num of images times 3 channels: RGB
+    collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
     for image in range(len(thumbs)):
         thumb_source = thumbs[image]['src']  # find thumbnail links
         res = requests.get(thumb_source)  # download thumbnail
         res.raise_for_status()
+
         # Save thumbnail
         image_file = open(dir_name+"/"+current_thumb, 'wb')
         for chunk in res.iter_content(100000):
@@ -72,8 +79,12 @@ def main():
         for channel, value in enumerate(avg_per_channel):
             collated_avg[channel].append(value)
 
+    # compute resulting colour from avg per image
+    collated_avg = img_avg(collated_avg)
+
     # save to file
     save_to_csv(collated_avg)
+
     for i in collated_avg: print(i)
 
 
