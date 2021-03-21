@@ -3,7 +3,6 @@
 # regularly, and uses it to compose a graphical representation of it.
 
 import requests
-import os
 import csv
 from bs4 import BeautifulSoup as bs
 from PIL import Image
@@ -39,7 +38,7 @@ def save_to_csv(filepath, collated_avg):
         wr.writerow('')
         wr.writerow(get_date_time())
         for channel, values in zip([['R'], ['G'], ['B'], ['AVG']], collated_avg):
-            wr.writerow(channel + values)
+            wr.writerow(channel + values + [sum(values) / len(values)])
         print("Saved!")
     pass
 
@@ -56,7 +55,6 @@ def main():
     target_class = "editorial-landing__img"
     thumb_file = "getty_thumb/getty_thumb.jpg"
     averages_file = "getty_averages/getty_averages.csv"
-    #os.makedirs(dir_name, exist_ok=True)   # One thumbnail at any one time in this directory for processing.
 
     res = requests.get(getty_ed_url)
     res.raise_for_status()
