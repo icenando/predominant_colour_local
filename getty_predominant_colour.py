@@ -7,26 +7,35 @@ import os
 from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
-
-
-def div_mult_by_255(array, key):
-    if key == "div":
-        return array/255
-    elif key == 'mult':
-        return array*255
+import csv
+from datetime import datetime
 
 
 def img_to_array():
     img = Image.open("getty_thumb/saved_thumb.jpg")
     img_array = asarray(img)
     img_array = img_array.astype(float)
-    img_array = div_mult_by_255(img_array, 'div')
     return img_array
 
 
 def compute_avg(array):
     array = mean(array, axis=(0, 1))
     return array
+
+
+def get_date_time():
+    return((datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S')))
+
+
+def save_to_csv(collated_avg):
+    with open("avgs/averages.csv", "a") as output:
+        wr = csv.writer(output, dialect='excel')
+        wr.writerow('')
+        wr.writerow(get_date_time())
+        for channel, values in zip([['R'], ['G'], ['B']], collated_avg):
+            wr.writerow(channel + values)
+        print("Saved!")
+    pass
 
 
 def main():
@@ -41,9 +50,7 @@ def main():
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)  # find all thumbnails of target_class
-    #print(len(thumbs))
-    collated_avg = [[] * len(thumbs) for i in range(3)]
-    #print(len(collated_avg))
+    collated_avg = [[] * len(thumbs) for _ in range(3)]  # num of images times 3 channels: RGB
 
     for image in range(len(thumbs)):
         thumb_source = thumbs[image]['src']  # find thumbnail links
@@ -61,14 +68,12 @@ def main():
         # average each channel, store it in list
         avg_per_channel = compute_avg(img_array)
 
-        # compute array back to 256 colours
-        avg_per_channel = div_mult_by_255(avg_per_channel, 'mult')
-        #print(avg_per_channel)
-
         # each average inside list
         for channel, value in enumerate(avg_per_channel):
             collated_avg[channel].append(value)
 
+    # save to file
+    save_to_csv(collated_avg)
     for i in collated_avg: print(i)
 
 
