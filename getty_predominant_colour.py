@@ -4,6 +4,7 @@
 
 import requests
 import csv
+import os
 from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
@@ -87,7 +88,8 @@ def main():
     # save to file
     save_to_csv(averages_file, collated_avg)
 
-    for i in collated_avg: print(i)
+    # delete thumbnail
+    os.remove(thumb_file)
 
 
 if __name__ == "__main__":
