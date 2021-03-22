@@ -5,14 +5,15 @@
 import requests
 import csv
 import os
+from io import BytesIO
 from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
 from datetime import datetime
 
 
-def img_to_array(thumb_file_path):
-    img_array = asarray(Image.open(thumb_file_path))
+def img_to_array(thumb_file):
+    img_array = asarray(thumb_file)
     img_array = img_array.astype(float)
     return img_array
 
@@ -43,17 +44,9 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
-def save_thumbnail(filepath, res):
-    image_file = open(filepath, 'wb')
-    for chunk in res.iter_content(100000):
-        image_file.write(chunk)
-    image_file.close()
-
-
 def main():
     getty_ed_url = "https://www.gettyimages.co.uk/editorial-images"
     target_class = "editorial-landing__img"
-    thumb_file = "getty_thumb/getty_thumb.jpg"
     averages_file = "getty_averages/getty_averages.csv"
 
     res = requests.get(getty_ed_url)
@@ -67,11 +60,8 @@ def main():
         res = requests.get(thumbs[image]['src'])  # download thumbnail
         res.raise_for_status()
 
-        # Save thumbnail
-        save_thumbnail(thumb_file, res)
-
-        # open thumbnail as array
-        img_array = img_to_array(thumb_file)
+        # converts thumbnail info to array
+        img_array = img_to_array(Image.open(BytesIO(res.content)))
 
         # average each channel, store it in list
         avg_per_channel = channel_avg(img_array)
@@ -85,9 +75,6 @@ def main():
 
     # save to file
     save_to_csv(averages_file, collated_avg)
-
-    # delete thumbnail
-    os.remove(thumb_file)
 
 
 if __name__ == "__main__":
