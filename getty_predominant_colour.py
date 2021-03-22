@@ -12,8 +12,7 @@ from datetime import datetime
 
 
 def img_to_array(thumb_file_path):
-    img = Image.open(thumb_file_path)
-    img_array = asarray(img)
+    img_array = asarray(Image.open(thumb_file_path))
     img_array = img_array.astype(float)
     return img_array
 
@@ -65,8 +64,7 @@ def main():
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
     for image in range(len(thumbs)):
-        thumb_source = thumbs[image]['src']  # find thumbnail links
-        res = requests.get(thumb_source)  # download thumbnail
+        res = requests.get(thumbs[image]['src'])  # download thumbnail
         res.raise_for_status()
 
         # Save thumbnail
