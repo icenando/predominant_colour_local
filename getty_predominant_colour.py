@@ -4,7 +4,6 @@
 
 import requests
 import csv
-import os
 from io import BytesIO
 from bs4 import BeautifulSoup as bs
 from PIL import Image
@@ -57,10 +56,10 @@ def main():
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
     for image in range(len(thumbs)):
-        res = requests.get(thumbs[image]['src'])  # download thumbnail
+        res = requests.get(thumbs[image]['src'])  # download thumbnail pixel info
         res.raise_for_status()
 
-        # converts thumbnail info to array
+        # converts pixel thumbnail info to array
         img_array = img_to_array(Image.open(BytesIO(res.content)))
 
         # average each channel, store it in list
