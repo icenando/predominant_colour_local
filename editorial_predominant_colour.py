@@ -1,6 +1,5 @@
 #! python3
-# getty_predominant_colour.py - averages the colour of each thumbnail in https://www.gettyimages.co.uk/editorial-images
-# regularly, and uses it to compose a graphical representation of it.
+# editorial_predominant_colour.py - averages the colour of all given thumbnail CSS class in given URL.
 
 import requests
 import csv
@@ -43,12 +42,10 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
-def main():
-    getty_ed_url = "https://www.gettyimages.co.uk/editorial-images"
-    target_class = "editorial-landing__img"
-    averages_file = "getty_averages/getty_averages.csv"
+def main(ed_url, target_class):
+    averages_file = "averages/averages.csv"
 
-    res = requests.get(getty_ed_url)
+    res = requests.get(ed_url)
     res.raise_for_status()
     soup = bs(res.text, 'html.parser')
 
@@ -77,4 +74,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    url = "https://www.gettyimages.co.uk/editorial-images"
+    css_class = "editorial-landing__img"
+    main(url, css_class)
