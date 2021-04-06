@@ -42,19 +42,22 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
+def get_url_info(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response
+
 def main(ed_url, target_class):
     averages_file = "averages/averages.csv"
 
-    res = requests.get(ed_url)
-    res.raise_for_status()
+    res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)  # find all thumbnails of target_class
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
     for image in range(len(thumbs)):
-        res = requests.get(thumbs[image]['src'])  # download thumbnail pixel info
-        res.raise_for_status()
+        res = get_url_info(thumbs[image]['src'])  # download thumbnail pixel infoss
 
         # converts pixel thumbnail info to array
         img_array = img_to_array(Image.open(BytesIO(res.content)))
