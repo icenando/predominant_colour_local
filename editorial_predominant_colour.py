@@ -32,6 +32,7 @@ def get_date_time():
 
 
 def save_to_csv(filepath, collated_avg):
+    # TODO: check if folder exists, if not, create it
     with open(filepath, "a") as output:
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
@@ -42,10 +43,11 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
-def get_url_info(url):
-    response = requests.get(url)
+def get_url_info(target_url):
+    response = requests.get(target_url)
     response.raise_for_status()
     return response
+
 
 def main(ed_url, target_class):
     averages_file = "averages/averages.csv"
