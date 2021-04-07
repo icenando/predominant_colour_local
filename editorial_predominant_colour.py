@@ -1,5 +1,5 @@
 #! python3
-# editorial_predominant_colour.py - averages the colour of all given thumbnail CSS class in given URL.
+# editorial_predominant_colour.py - averages RGB colours of all given thumbnail CSS class in given URL.
 
 import requests
 import csv
@@ -63,11 +63,11 @@ def main(ed_url, target_class):
     res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')
 
-    thumbs = soup.find_all(class_=target_class)  # find all thumbnails of target_class
+    thumbs = soup.find_all(class_=target_class)
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
     for image in range(len(thumbs)):
-        res = get_url_info(thumbs[image]['src'])  # download thumbnail pixel infoss
+        res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
 
         # converts pixel thumbnail info to array
         img_array = img_to_array(Image.open(BytesIO(res.content)))
