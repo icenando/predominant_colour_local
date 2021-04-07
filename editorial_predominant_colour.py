@@ -69,7 +69,7 @@ def main(ed_url, target_class):
     for image in range(len(thumbs)):
         res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
 
-        # converts pixel thumbnail info to array
+        # converts thumbnail pixel info to array
         img_array = img_to_array(Image.open(BytesIO(res.content)))
 
         # average each channel, store it in list
