@@ -58,7 +58,7 @@ def get_url_info(target_url):
 
 
 def main(ed_url, target_class):
-    averages_file = "averages/averages.csv"
+    averages_file = url.split('//')[1] + "/averages.csv"
 
     res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')
