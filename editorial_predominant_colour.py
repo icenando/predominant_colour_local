@@ -33,10 +33,10 @@ def get_date_time():
 
 
 def check_folder(path):
-    if os.path.exists(path):
+    if os.path.exists('/'.join(path.split('/')[0:-1])):
         pass
     else:
-        os.makedirs(path)
+        os.makedirs('/'.join(path.split('/')[0:-1]))
 
 
 def save_to_csv(filepath, collated_avg):
