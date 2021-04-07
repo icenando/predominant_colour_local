@@ -3,6 +3,7 @@
 
 import requests
 import csv
+import os.path
 from io import BytesIO
 from bs4 import BeautifulSoup as bs
 from PIL import Image
@@ -31,8 +32,15 @@ def get_date_time():
     return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
 
 
+def check_folder(path):
+    if os.path.exists(path):
+        pass
+    else:
+        os.makedirs(path)
+
+
 def save_to_csv(filepath, collated_avg):
-    # TODO: check if folder exists, if not, create it
+    check_folder(filepath)
     with open(filepath, "a") as output:
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
