@@ -51,6 +51,19 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
+def process_pipeline(thumbs, collated_avg):
+    for image in range(len(thumbs)):
+        res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
+
+        img_array = img_to_array(Image.open(BytesIO(res.content)))  # converts thumbnail pixel info to array
+
+        avg_per_channel = channel_avg(img_array)   # average each channel, store it in list
+
+        for channel, value in enumerate(avg_per_channel):   # each average inside list
+            collated_avg[channel].append(value)
+    return collated_avg
+
+
 def get_url_info(target_url):
     response = requests.get(target_url)
     response.raise_for_status()
@@ -66,18 +79,7 @@ def main(ed_url, target_class):
     thumbs = soup.find_all(class_=target_class)
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
-    for image in range(len(thumbs)):
-        res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
-
-        # converts thumbnail pixel info to array
-        img_array = img_to_array(Image.open(BytesIO(res.content)))
-
-        # average each channel, store it in list
-        avg_per_channel = channel_avg(img_array)
-
-        # each average inside list
-        for channel, value in enumerate(avg_per_channel):
-            collated_avg[channel].append(value)
+    process_pipeline(thumbs, collated_avg)
 
     # compute resulting colour from avg per image
     collated_avg = img_avg(collated_avg)
