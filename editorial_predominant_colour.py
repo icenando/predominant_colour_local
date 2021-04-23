@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 from PIL import Image
 from numpy import asarray, mean
 from datetime import datetime
+import time
 
 
 def img_to_array(thumb_file):
@@ -52,6 +53,8 @@ def save_to_csv(filepath, collated_avg):
 
 
 def process_pipeline(thumbs, collated_avg):
+    start = time.perf_counter()
+
     for image in range(len(thumbs)):
         res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
 
@@ -61,6 +64,9 @@ def process_pipeline(thumbs, collated_avg):
 
         for channel, value in enumerate(avg_per_channel):   # each average inside list
             collated_avg[channel].append(value)
+
+    end = time.perf_counter()
+    print(f'Synchronous processing took {str(end-start)} second(s).') 
     return collated_avg
 
 
@@ -79,13 +85,11 @@ def main(ed_url, target_class):
     thumbs = soup.find_all(class_=target_class)
     collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
-    process_pipeline(thumbs, collated_avg)
+    collated_avg = process_pipeline(thumbs, collated_avg)
 
-    # compute resulting colour from avg per image
-    collated_avg = img_avg(collated_avg)
+    collated_avg = img_avg(collated_avg)  # compute resulting colour from avg per image
 
-    # save to file
-    save_to_csv(averages_file, collated_avg)
+    save_to_csv(averages_file, collated_avg)  # save to file
 
 
 if __name__ == "__main__":
