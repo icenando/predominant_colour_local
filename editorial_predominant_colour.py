@@ -10,6 +10,13 @@ from PIL import Image
 from numpy import asarray, mean
 from datetime import datetime
 import time
+import concurrent.futures
+
+
+class thumb_obj:
+    def __init__(self, thumbs):
+        self.thumb = thumbs
+        self.collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
 
 
 def img_to_array(thumb_file):
@@ -52,45 +59,40 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
-def process_pipeline(thumbs, collated_avg):
-    start = time.perf_counter()
-
-    for image in range(len(thumbs)):
-        res = get_url_info(thumbs[image]['src'])  # retrieves thumbnail pixel info
-
-        img_array = img_to_array(Image.open(BytesIO(res.content)))  # converts thumbnail pixel info to array
-
-        avg_per_channel = channel_avg(img_array)   # average each channel, store it in list
-
-        for channel, value in enumerate(avg_per_channel):   # each average inside list
-            collated_avg[channel].append(value)
-
-    end = time.perf_counter()
-    print(f'Synchronous processing took {str(end-start)} second(s).') 
-    return collated_avg
-
-
 def get_url_info(target_url):
     response = requests.get(target_url)
     response.raise_for_status()
     return response
 
 
+def process_pipeline(thumb):
+
+    res = get_url_info(thumb['src'])  # retrieves thumbnail pixel info
+    img_array = img_to_array(Image.open(BytesIO(res.content)))  # converts thumbnail pixel info to array
+    avg_per_channel = channel_avg(img_array)   # average each channel, store it in list
+
+    for channel, value in enumerate(avg_per_channel):   # each average inside list
+        thumbs.collated_avg[channel].append(value)
+
+
 def main(ed_url, target_class):
+    start = time.perf_counter()  # just to check performance
     averages_file = url.split('//')[1] + "/averages.csv"
 
     res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')
 
-    thumbs = soup.find_all(class_=target_class)
-    collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
+    global thumbs
+    thumbs = thumb_obj(soup.find_all(class_=target_class))
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(process_pipeline, thumbs.thumb)
 
-    collated_avg = process_pipeline(thumbs, collated_avg)
-
-    collated_avg = img_avg(collated_avg)  # compute resulting colour from avg per image
-
-    save_to_csv(averages_file, collated_avg)  # save to file
-
+    thumbs.collated_avg = img_avg(thumbs.collated_avg)  # compute resulting colour from avg per image
+    save_to_csv(averages_file, thumbs.collated_avg)  # save to file
+    
+    end = time.perf_counter()  # just to check performance
+    print(f'Processing took {str(end-start)} second(s).') 
 
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
