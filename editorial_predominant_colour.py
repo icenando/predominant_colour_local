@@ -39,8 +39,7 @@ def img_avg(array):
 
 
 def get_date_time():
-    return (datetime.today()).strftime('%Y-%m-%d'),
-    (datetime.today().strftime('%H:%M:%S'))
+    return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
 
 
 def check_folder(path):
@@ -85,7 +84,7 @@ def process_pipeline(thumb):
         thumbs.collated_avg[channel].append(value)
 
 
-def main(ed_url, target_class):
+def main(ed_url, target_class, enable_multithread):
     start = time.perf_counter()  # just to check performance
     averages_file = url.split('//')[1] + "/averages.csv"
 
@@ -95,8 +94,16 @@ def main(ed_url, target_class):
     global thumbs
     thumbs = thumb_obj(soup.find_all(class_=target_class))
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(process_pipeline, thumbs.thumb)
+    if enable_multithread:  
+    # faster, but saves results in the same order as 
+    # the threads finish processing them.
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(process_pipeline, thumbs.thumb)
+    else:
+    # slower, but results are saved in the  same order 
+    # in which they appear on the webpage.
+        for thumb in thumbs.thumb:
+            process_pipeline(thumb)
 
     # compute resulting colour from avg per image
     thumbs.collated_avg = img_avg(thumbs.collated_avg)
@@ -110,4 +117,5 @@ def main(ed_url, target_class):
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
     css_class = "editorial-landing__img"
-    main(url, css_class)
+    enable_multithread = True
+    main(url, css_class, enable_multithread)
