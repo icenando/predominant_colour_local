@@ -43,10 +43,11 @@ def get_date_time():
 
 
 def check_folder(path):
-    if os.path.exists('/'.join(path.split('/')[0:-1])):
+    joined_path = os.path.join(*[parts for parts in os.path.split('/')[0:-1]])
+    if os.path.exists(joined_path):
         pass
     else:
-        os.makedirs('/'.join(path.split('/')[0:-1]))
+        os.makedirs(joined_path)
 
 
 def save_to_csv(filepath, collated_avg):
@@ -86,7 +87,7 @@ def process_pipeline(thumb):
 
 def main(ed_url, target_class, enable_multithread):
     start = time.perf_counter()  # just to check performance
-    averages_file = url.split('//')[1] + "/averages.csv"
+    averages_file = ed_url.split('//')[1] + "/averages.csv"
 
     res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')

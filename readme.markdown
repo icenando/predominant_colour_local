@@ -74,10 +74,6 @@ Creates a folder (if it doesn't already exist) with the website address, and sub
 
 The CSV file will be saved inside this folder.
 
-## Limitations
-
-TODO: The CSV file folder path is specific for Macs and might not work on PCs.
-
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
