@@ -1,5 +1,6 @@
 #! python3
-# editorial_predominant_colour.py - averages RGB colours of all given thumbnail CSS class in given URL.
+# editorial_predominant_colour.py - averages RGB colours of all
+# given thumbnail CSS class in given URL.
 
 import requests
 import csv
@@ -16,7 +17,8 @@ import concurrent.futures
 class thumb_obj:
     def __init__(self, thumbs):
         self.thumb = thumbs
-        self.collated_avg = [[] * len(thumbs) for _ in range(4)]  # num of images times 3 channels (RGB) + AVG row
+        # num of images times 3 channels (RGB) + 'average' row
+        self.collated_avg = [[] * len(thumbs) for _ in range(4)]
 
 
 def img_to_array(thumb_file):
@@ -37,7 +39,8 @@ def img_avg(array):
 
 
 def get_date_time():
-    return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
+    return (datetime.today()).strftime('%Y-%m-%d'),
+    (datetime.today().strftime('%H:%M:%S'))
 
 
 def check_folder(path):
@@ -53,7 +56,9 @@ def save_to_csv(filepath, collated_avg):
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
         wr.writerow(get_date_time())
-        for channel, values in zip([['R'], ['G'], ['B'], ['AVG']], collated_avg):
+        for channel, values in zip([
+                                ['R'], ['G'], ['B'], ['AVG']
+                                ], collated_avg):
             wr.writerow(channel + values + [sum(values) / len(values)])
         print("Saved!")
     pass
@@ -66,12 +71,17 @@ def get_url_info(target_url):
 
 
 def process_pipeline(thumb):
+    # retrieves thumbnail pixel info
+    res = get_url_info(thumb['src'])
 
-    res = get_url_info(thumb['src'])  # retrieves thumbnail pixel info
-    img_array = img_to_array(Image.open(BytesIO(res.content)))  # converts thumbnail pixel info to array
-    avg_per_channel = channel_avg(img_array)   # average each channel, store it in list
+    # converts thumbnail pixel info to array
+    img_array = img_to_array(Image.open(BytesIO(res.content)))
 
-    for channel, value in enumerate(avg_per_channel):   # each average inside list
+    # average each channel, store it in list
+    avg_per_channel = channel_avg(img_array)
+
+    # each average inside list
+    for channel, value in enumerate(avg_per_channel):
         thumbs.collated_avg[channel].append(value)
 
 
@@ -84,15 +94,18 @@ def main(ed_url, target_class):
 
     global thumbs
     thumbs = thumb_obj(soup.find_all(class_=target_class))
-    
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(process_pipeline, thumbs.thumb)
 
-    thumbs.collated_avg = img_avg(thumbs.collated_avg)  # compute resulting colour from avg per image
-    save_to_csv(averages_file, thumbs.collated_avg)  # save to file
-    
+    # compute resulting colour from avg per image
+    thumbs.collated_avg = img_avg(thumbs.collated_avg)
+
+    save_to_csv(averages_file, thumbs.collated_avg)
+
     end = time.perf_counter()  # just to check performance
-    print(f'Processing took {str(end-start)} second(s).') 
+    print(f'Processing took {str(end-start)} second(s).')
+
 
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
