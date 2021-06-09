@@ -1,6 +1,6 @@
 #! python3
-# editorial_predominant_colour.py - averages RGB colours of all
-# given thumbnail CSS class in given URL.
+# editorial_predominant_colour.py - averages RGB colours 
+# of all given thumbnail CSS class in given URL.
 
 import requests
 import csv
@@ -14,52 +14,52 @@ import time
 import concurrent.futures
 
 
-class thumb_obj:
-    def __init__(self, thumbs):
-        self.thumb = thumbs
-        # num of images times 3 channels (RGB) + 'average' row
-        self.collated_avg = [[] * len(thumbs) for _ in range(4)]
-
-
 def img_to_array(thumb_file):
-    img_array = asarray(thumb_file)
-    img_array = img_array.astype(float)
-    return img_array
+    return asarray(thumb_file).astype(float)
 
 
 def channel_avg(array):
-    array = mean(array, axis=(0, 1))
-    return array
+    return mean(array, axis=(0, 1))
 
 
 def img_avg(array):
     for image in range(len(array[0])):
-        array[3].append(int((array[0][image] + array[1][image] + array[2][image]) // 3))
+        array[3].append(int((array[0][image] + \
+            array[1][image] + array[2][image]) // 3))
     return array
 
 
 def get_date_time():
-    return (datetime.today()).strftime('%Y-%m-%d'), (datetime.today().strftime('%H:%M:%S'))
+    return (datetime.today()).strftime('%Y-%m-%d'), \
+            (datetime.today().strftime('%H:%M:%S'))
 
 
 def check_folder(path):
-    joined_path = os.path.join(*[parts for parts in os.path.split('/')[0:-1]])
+    joined_path = os.path.join(
+        *[parts for parts in os.path.split('/')[0:-1]]
+    )
     if os.path.exists(joined_path):
         pass
     else:
         os.makedirs(joined_path)
+    return None
 
 
 def save_to_csv(filepath, collated_avg):
+    
     check_folder(filepath)
+
     with open(filepath, "a") as output:
         wr = csv.writer(output, dialect='excel')
         wr.writerow('')
         wr.writerow(get_date_time())
+
         for channel, values in zip([
-                                ['R'], ['G'], ['B'], ['AVG']
-                                ], collated_avg):
-            wr.writerow(channel + values + [sum(values) / len(values)])
+                ['R'], ['G'], ['B'], ['AVG']
+                ], collated_avg):
+            wr.writerow(
+                channel + values + [sum(values) / len(values)]
+            )
         print("Saved!")
     pass
 
@@ -82,7 +82,7 @@ def process_pipeline(thumb):
 
     # each average inside list
     for channel, value in enumerate(avg_per_channel):
-        thumbs.collated_avg[channel].append(value)
+        collated_avg[channel].append(value)
 
 
 def main(ed_url, target_class, enable_multithread):
@@ -92,26 +92,29 @@ def main(ed_url, target_class, enable_multithread):
     res = get_url_info(ed_url)
     soup = bs(res.text, 'html.parser')
 
-    global thumbs
-    thumbs = thumb_obj(soup.find_all(class_=target_class))
+    thumbs = soup.find_all(class_=target_class)
+    global collated_avg
+    # num of images * 3 channels + 'average' row
+    collated_avg = [[] * len(thumbs) for _ in range(4)]
 
     if enable_multithread:  
     # faster, but saves results in the same order as 
     # the threads finish processing them.
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(process_pipeline, thumbs.thumb)
+            executor.map(process_pipeline, thumbs)
     else:
     # slower, but results are saved in the  same order 
     # in which they appear on the webpage.
-        for thumb in thumbs.thumb:
+        for thumb in thumbs:
             process_pipeline(thumb)
 
     # compute resulting colour from avg per image
-    thumbs.collated_avg = img_avg(thumbs.collated_avg)
+    collated_avg = img_avg(collated_avg)
 
-    save_to_csv(averages_file, thumbs.collated_avg)
+    save_to_csv(averages_file, collated_avg)
 
-    end = time.perf_counter()  # just to check performance
+    # just to check speed
+    end = time.perf_counter()
     print(f'Processing took {str(end-start)} second(s).')
 
 
