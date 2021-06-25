@@ -12,6 +12,7 @@ from numpy import asarray, mean
 from datetime import datetime
 import time
 import concurrent.futures
+from itertools import repeat
 
 
 def img_to_array(thumb_file):
@@ -70,7 +71,7 @@ def get_url_info(target_url):
     return response
 
 
-def process_pipeline(thumb):
+def process_pipeline(thumb, collated_avg):
     # retrieves thumbnail pixel info
     res = get_url_info(thumb['src'])
 
@@ -93,7 +94,7 @@ def main(ed_url, target_class, enable_multithread):
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)
-    global collated_avg
+    # global collated_avg
     # num of images * 3 channels + 'average' row
     collated_avg = [[] * len(thumbs) for _ in range(4)]
 
@@ -101,12 +102,12 @@ def main(ed_url, target_class, enable_multithread):
     # faster, but saves results in the same order as 
     # the threads finish processing them.
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(process_pipeline, thumbs)
+            executor.map(process_pipeline, thumbs, repeat(collated_avg))
     else:
     # slower, but results are saved in the  same order 
     # in which they appear on the webpage.
         for thumb in thumbs:
-            process_pipeline(thumb)
+            process_pipeline(thumb, collated_avg)
 
     # compute resulting colour from avg per image
     collated_avg = img_avg(collated_avg)

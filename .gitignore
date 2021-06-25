@@ -2,3 +2,4 @@
 *.xml
 *.afphoto
 *.csv
+.venv
