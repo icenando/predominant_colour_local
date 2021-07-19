@@ -89,7 +89,7 @@ def process_pipeline(thumb, collated_avg):
             collated_avg[channel].append(value)
 
 
-async def main(ed_url, target_class, enable_multithread):
+async def main(ed_url, target_class, concur):
     start = time.perf_counter()  # just to check performance
     averages_file = ed_url.split('//')[1] + "/averages.csv"
 
@@ -101,7 +101,7 @@ async def main(ed_url, target_class, enable_multithread):
     # num of images * 3 channels + 'average' row
     collated_avg = [[] * len(thumbs) for _ in range(4)]
 
-    if enable_multithread:
+    if concur:
 
         thumbs_to_process = (process_pipeline(thumb, collated_avg) for thumb in thumbs)
 
@@ -130,5 +130,5 @@ async def main(ed_url, target_class, enable_multithread):
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
     css_class = "editorial-landing__img"
-    enable_multithread = True
-    asyncio.run(main(url, css_class, enable_multithread))
+    concurrency = True
+    asyncio.run(main(url, css_class, concurrency))
