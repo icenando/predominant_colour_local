@@ -2,6 +2,7 @@
 # editorial_predominant_colour.py - averages RGB colours 
 # of all given thumbnail CSS class in given URL.
 
+import numpy
 import requests
 import csv
 import os.path
@@ -11,8 +12,9 @@ from PIL import Image
 from numpy import asarray, mean
 from datetime import datetime
 import time
-import concurrent.futures
 from itertools import repeat
+
+import asyncio
 
 
 def img_to_array(thumb_file):
@@ -82,11 +84,12 @@ def process_pipeline(thumb, collated_avg):
     avg_per_channel = channel_avg(img_array)
 
     # each average inside list
-    for channel, value in enumerate(avg_per_channel):
-        collated_avg[channel].append(value)
+    if type(avg_per_channel) != numpy.float64:
+        for channel, value in enumerate(avg_per_channel):
+            collated_avg[channel].append(value)
 
 
-def main(ed_url, target_class, enable_multithread):
+async def main(ed_url, target_class, enable_multithread):
     start = time.perf_counter()  # just to check performance
     averages_file = ed_url.split('//')[1] + "/averages.csv"
 
@@ -98,11 +101,16 @@ def main(ed_url, target_class, enable_multithread):
     # num of images * 3 channels + 'average' row
     collated_avg = [[] * len(thumbs) for _ in range(4)]
 
-    if enable_multithread:  
-    # faster, but saves results in the same order as 
-    # the threads finish processing them.
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(process_pipeline, thumbs, repeat(collated_avg))
+    if enable_multithread:
+
+        thumbs_to_process = (process_pipeline(thumb, collated_avg) for thumb in thumbs)
+
+        tasks = asyncio.gather(
+                    thumbs_to_process
+                )
+
+        await tasks
+
     else:
     # slower, but results are saved in the  same order 
     # in which they appear on the webpage.
@@ -123,4 +131,4 @@ if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
     css_class = "editorial-landing__img"
     enable_multithread = True
-    main(url, css_class, enable_multithread)
+    asyncio.run(main(url, css_class, enable_multithread))
