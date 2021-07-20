@@ -2,8 +2,6 @@
 # editorial_predominant_colour.py - averages RGB colours 
 # of all given thumbnail CSS class in given URL.
 
-import numpy
-import requests
 import csv
 import os.path
 from io import BytesIO
@@ -12,9 +10,10 @@ from PIL import Image
 from numpy import asarray, mean
 from datetime import datetime
 import time
-from itertools import repeat
 
 import asyncio
+import httpx
+
 
 
 def img_to_array(thumb_file):
@@ -67,15 +66,15 @@ def save_to_csv(filepath, collated_avg):
     pass
 
 
-def get_url_info(target_url):
-    response = requests.get(target_url)
-    response.raise_for_status()
-    return response
+async def get_url_info(target_url):
+    async with httpx.AsyncClient() as client:
+        res = await client.get(target_url)
+    return res
 
 
-def process_pipeline(thumb, collated_avg):
+async def process_pipeline(thumb, collated_avg):
     # retrieves thumbnail pixel info
-    res = get_url_info(thumb['src'])
+    res = await get_url_info(thumb['src'])
 
     # converts thumbnail pixel info to array
     img_array = img_to_array(Image.open(BytesIO(res.content)))
@@ -84,16 +83,16 @@ def process_pipeline(thumb, collated_avg):
     avg_per_channel = channel_avg(img_array)
 
     # each average inside list
-    if type(avg_per_channel) != numpy.float64:
-        for channel, value in enumerate(avg_per_channel):
-            collated_avg[channel].append(value)
+    for channel, value in enumerate(avg_per_channel):
+        collated_avg[channel].append(value)
 
 
-async def main(ed_url, target_class, concur):
+async def main(ed_url, target_class):
     start = time.perf_counter()  # just to check performance
     averages_file = ed_url.split('//')[1] + "/averages.csv"
 
-    res = get_url_info(ed_url)
+    res = await get_url_info(ed_url)
+
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)
@@ -101,21 +100,10 @@ async def main(ed_url, target_class, concur):
     # num of images * 3 channels + 'average' row
     collated_avg = [[] * len(thumbs) for _ in range(4)]
 
-    if concur:
-
-        thumbs_to_process = (process_pipeline(thumb, collated_avg) for thumb in thumbs)
-
-        tasks = asyncio.gather(
-                    thumbs_to_process
-                )
-
-        await tasks
-
-    else:
-    # slower, but results are saved in the  same order 
-    # in which they appear on the webpage.
-        for thumb in thumbs:
-            process_pipeline(thumb, collated_avg)
+    tasks = asyncio.gather(
+                *[process_pipeline(thumb, collated_avg) for thumb in thumbs]
+            )
+    await tasks
 
     # compute resulting colour from avg per image
     collated_avg = img_avg(collated_avg)
@@ -130,5 +118,4 @@ async def main(ed_url, target_class, concur):
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
     css_class = "editorial-landing__img"
-    concurrency = True
-    asyncio.run(main(url, css_class, concurrency))
+    asyncio.run(main(url, css_class))
