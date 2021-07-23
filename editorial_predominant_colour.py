@@ -73,8 +73,8 @@ async def process_pipeline(thumb, collated_avg):
         with Image.open(content) as img:
             img_array = asarray(img, dtype=float)
 
-    # average each channel: "flattens" rows and columns,
-    # thus averaging RGB channels for each "row x colum layer"
+    # average each channel: averages RGB channels 
+    # for each row (axis=0) x column (axis=1) "sheet"
     avg_per_channel = mean(img_array, axis=(0, 1))
 
     # each average inside list
