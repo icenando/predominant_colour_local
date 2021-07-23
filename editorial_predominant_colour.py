@@ -16,10 +16,6 @@ import httpx
 
 
 
-def img_to_array(thumb_file):
-    return asarray(thumb_file).astype(float)
-
-
 def img_avg(array):
     for image in range(len(array[0])):
         array[3].append(int((array[0][image] + \
@@ -73,7 +69,8 @@ async def process_pipeline(thumb, collated_avg):
     res = await get_url_info(thumb['src'])
 
     # converts thumbnail pixel info to array
-    img_array = img_to_array(Image.open(BytesIO(res.content)))
+    with Image.open(BytesIO(res.content)) as img:
+        img_array = asarray(img, dtype=float)
 
     # average each channel, store it in list
     avg_per_channel = mean(img_array, axis=(0, 1))
