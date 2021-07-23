@@ -20,10 +20,6 @@ def img_to_array(thumb_file):
     return asarray(thumb_file).astype(float)
 
 
-def channel_avg(array):
-    return mean(array, axis=(0, 1))
-
-
 def img_avg(array):
     for image in range(len(array[0])):
         array[3].append(int((array[0][image] + \
@@ -80,7 +76,7 @@ async def process_pipeline(thumb, collated_avg):
     img_array = img_to_array(Image.open(BytesIO(res.content)))
 
     # average each channel, store it in list
-    avg_per_channel = channel_avg(img_array)
+    avg_per_channel = mean(img_array, axis=(0, 1))
 
     # each average inside list
     for channel, value in enumerate(avg_per_channel):
@@ -96,7 +92,7 @@ async def main(ed_url, target_class):
     soup = bs(res.text, 'html.parser')
 
     thumbs = soup.find_all(class_=target_class)
-    # global collated_avg
+
     # num of images * 3 channels + 'average' row
     collated_avg = [[] * len(thumbs) for _ in range(4)]
 
