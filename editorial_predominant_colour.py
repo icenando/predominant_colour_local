@@ -112,7 +112,7 @@ async def main(ed_url, target_class):
 
     # just to check speed
     end = time.perf_counter()
-    print(f'Processing took {str(end-start)} second(s).')
+    print(f'Processing took {(end-start):.2f} second(s).')
 
 
 if __name__ == "__main__":
