@@ -17,15 +17,12 @@ The main function takes two variables: the URL and the CSS class. Supplied with 
 if __name__ == "__main__":
     url = "https://www.gettyimages.co.uk/editorial-images"
     css_class = "editorial-landing__img"
-    enable_multithread = True
-    main(url, css_class, enable_multithread)
+    main(url, css_class)
 ```
 
-## Multithreading
+## Asynchronous processing
 
-The code uses multithreading by default, to boost processing times. In my local machine, the programme ran in around 7.5 secs using a synchronous approach, and in around 1.5 secs using an asynchronous approach. However, this also causes the order of the processes to vary and, as such, ***the entries in the output file will not correspond to the order in which the images appear on the webpage.***
-
-Multithreading can be disabled by changing "enable_multithread" in the above code to false. With multithreading disabled, the images will be processed and their pixel values saved in the same order that they appear in the webpage.
+The code uses asyncio to boost processing times. In my local machine, the programme ran in around 7.5 secs using a synchronous approach, and in around 1.5 secs using an asynchronous approach. However, this also causes the order of the processes to vary and, as such, ***the entries in the output file will not correspond to the order in which the images appear on the webpage.***
 
 ## Output file
 
