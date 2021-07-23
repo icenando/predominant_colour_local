@@ -68,11 +68,13 @@ async def process_pipeline(thumb, collated_avg):
     # retrieves thumbnail pixel info
     res = await get_url_info(thumb['src'])
 
-    # converts thumbnail pixel info to array
-    with Image.open(BytesIO(res.content)) as img:
-        img_array = asarray(img, dtype=float)
+    # converts thumbnail pixel info to numpy array
+    with BytesIO(res.content) as content:
+        with Image.open(content) as img:
+            img_array = asarray(img, dtype=float)
 
-    # average each channel, store it in list
+    # average each channel: "flattens" rows and columns,
+    # thus averaging RGB channels for each "row x colum layer"
     avg_per_channel = mean(img_array, axis=(0, 1))
 
     # each average inside list
